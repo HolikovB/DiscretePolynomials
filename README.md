@@ -1,6 +1,6 @@
-# 🧮 GroupFunction: Functions from Finite Abelian Groups to ℝ/ℤ in Python
+# Discrete polynomials
 
-This project defines and manipulates functions from the finite abelian group **ℤ/4ℤ × ℤ/4ℤ** to the circle group **ℝ/ℤ** (represented as `Fraction % 1` in Python). These functions can model discrete polynomials, cocycles, and more in finite settings.
+This project defines and manipulates functions from the finite abelian group **G** (mainly **ℤ/4ℤ × ℤ/4ℤ**) to the circle group **ℝ/ℤ** (represented as `Fraction % 1` in Python). In order to investigate discrete polynomials.
 
 It includes tools to:
 - Define arbitrary functions (not necessarily homomorphisms)
@@ -22,3 +22,7 @@ It includes tools to:
 ```bash
 git clone https://github.com/your-username/groupfunction.git
 cd groupfunction
+```
+
+## Example of usage 
+example 
