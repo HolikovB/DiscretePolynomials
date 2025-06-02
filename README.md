@@ -20,9 +20,8 @@ It includes tools to:
 
 ### 1. Clone the repo
 ```bash
-git clone https://github.com/your-username/groupfunction.git
-cd groupfunction
+git clone https://github.com/HolikovB/DiscretePolynomials.git
 ```
 
 ## Example of usage 
-example 
+example_z4x4.ipynb contains Jypiter notebook with some examples of usage of package.
