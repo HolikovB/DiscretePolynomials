@@ -3,7 +3,7 @@ from fractions import Fraction
 import itertools
 
 from discpoly.group import AbelianGroup
-from discpoly.utils import add_mod1, sub_mod1, zero_mod1
+from discpoly.utils import add_mod1, sub_mod1, mod1_frac, mod1_float, zero_mod1
 
 Real = Union[float, Fraction]
 
@@ -44,6 +44,58 @@ class PolynomialFunction:
     def __call__(self, g: Any) -> Real:
         return self.values[g]
 
+    def __add__(self, other: "PolynomialFunction") -> "PolynomialFunction":
+        """
+        Pointwise addition modulo 1: (f + g)(x) = f(x) + g(x) (mod 1).
+        Both must live on the same group G, and both must agree on use_fraction.
+        """
+        if self.G is not other.G:
+            raise ValueError("Cannot add PolynomialFunctions on different groups.")
+        # Check that they use the same numeric type
+        use_frac_self = isinstance(self._zero, Fraction)
+        use_frac_other = isinstance(other._zero, Fraction)
+        if use_frac_self != use_frac_other:
+            raise ValueError("Cannot add: one PolynomialFunction uses Fraction, the other float.")
+        use_fraction = use_frac_self
+
+        new_vals: Dict[Any, Real] = {}
+        for x in self.G:
+            a = self.values[x]
+            b = other.values[x]
+            # safe to call add_mod1 for both Fraction&Fraction or float&float
+            new_vals[x] = add_mod1(a, b)
+        return PolynomialFunction(self.G, new_vals, use_fraction=use_fraction)
+    
+    def __mul__(self, other: "PolynomialFunction") -> "PolynomialFunction":
+        """
+        Pointwise multiplication modulo 1: (f * g)(x) = [f(x) * g(x)] (mod 1).
+        Both must live on the same group G, and both must agree on use_fraction.
+        """
+        if self.G is not other.G:
+            raise ValueError("Cannot multiply PolynomialFunctions on different groups.")
+        use_frac_self = isinstance(self._zero, Fraction)
+        use_frac_other = isinstance(other._zero, Fraction)
+        if use_frac_self != use_frac_other:
+            raise ValueError("Cannot multiply: one PolynomialFunction uses Fraction, the other float.")
+        use_fraction = use_frac_self
+
+        new_vals: Dict[Any, Real] = {}
+        if use_fraction:
+            # exact rational multiplication
+            for x in self.G:
+                a: Fraction = self.values[x]
+                b: Fraction = other.values[x]
+                prod = a * b
+                new_vals[x] = mod1_frac(prod)
+        else:
+            # float multiplication
+            for x in self.G:
+                a: float = self.values[x]  # already in [0,1)
+                b: float = other.values[x]
+                prod = a * b
+                new_vals[x] = mod1_float(prod)
+        return PolynomialFunction(self.G, new_vals, use_fraction=use_fraction)
+    
     def difference(self, h: Any) -> "PolynomialFunction":
         """
         Compute Δ_h f:  x ↦ f(x + h) − f(x)  (mod 1).
@@ -82,7 +134,9 @@ class PolynomialFunction:
 
     def degree_leq(self, d: int) -> bool:
         """
-        Brute‐force check that for every (d+1)-tuple (h1,…,h_{d+1})∈G^{d+1},
+        First, it checks the identity that if f is polynomial of degree k, then
+        Δ^{k}-6Δ^{k-1}+4Δ^{k-2} = 0 (for any direction)
+        If it passes this test, check that for every (d+1)-tuple (h1,…,h_{d+1})∈G^{d+1},
         Δ_{h1,…,h_{d+1}} f is the zero function.  Return True iff so.
         Warning: runtime is |G|^{(d+1)}, so only small d/|G| feasible.
         """
