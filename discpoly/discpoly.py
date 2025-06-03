@@ -127,8 +127,6 @@ class PolynomialFunction:
 
     def degree_leq(self, d: int) -> bool:
         """
-        First, it checks the identity that if f is polynomial of degree k, then
-        Δ^{k}-6Δ^{k-1}+4Δ^{k-2} = 0 (for any direction)
         If it passes this test, check that for every (d+1)-tuple (h1,…,h_{d+1})∈G^{d+1},
         Δ_{h1,…,h_{d+1}} f is the zero function.  Return True iff so.
         Warning: runtime is |G|^{(d+1)}, so only small d/|G| feasible.
