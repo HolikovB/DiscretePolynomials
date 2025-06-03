@@ -25,3 +25,7 @@ git clone https://github.com/HolikovB/DiscretePolynomials.git
 
 ## Example of usage 
 example_z4x4.ipynb contains Jypiter notebook with some examples of usage of package.
+
+
+## Current experiments
+find_all_poly.ipynb contains list of all 24 polynomials (up to constant) of degree $2$ such that $4f \neq 0$.
