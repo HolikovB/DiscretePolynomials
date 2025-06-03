@@ -3,12 +3,7 @@ from typing import Union
 
 Real = Union[float, Fraction]
 
-def mod1_float(x: float) -> float:
-    """
-    Reduce a float x into [0,1) by subtracting floor(x). 
-    (Equivalent to x % 1 for non‐extreme floats.)
-    """
-    return x - float(int(x))
+
 
 def mod1_frac(x: Fraction) -> Fraction:
     """
