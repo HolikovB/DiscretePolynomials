@@ -1,10 +1,11 @@
 from typing import Any, Dict, List, Union
 from fractions import Fraction
 import itertools
-
-from discpoly.group import AbelianGroup
-from discpoly.utils import add_mod1, sub_mod1, mod1_frac, zero_mod1
-
+import numpy as np
+import json
+from discpoly.group import AbelianGroup, CyclicGroup, DirectSumGroup
+from discpoly.utils import add_mod1, sub_mod1, mod1_frac, zero_mod1 , standart_basis
+from math import comb
 
 
 class PolynomialFunction:
@@ -33,8 +34,53 @@ class PolynomialFunction:
         self._zero = zero_mod1(Fraction)
 
 
+
+    @classmethod
+    def from_binomial_single(cls, i: int) -> "PolynomialFunction":
+        """
+        Create f: Z/4Z -> R/Z with f(x) = binomial(x, i)/4 mod 1.
+        """
+        G = CyclicGroup(4)
+        if i < 0:
+            raise ValueError("Binomial index i must be non-negative.")
+        elements = G.elements()
+        vals: Dict[Any, Fraction] = {}
+        for x in elements:
+            # Interpret x = 0, 1, ..., n-1
+            vals[x] = mod1_frac(Fraction(comb(x, i),4))
+        return PolynomialFunction(G,vals)
+    
+    @classmethod
+    def from_binomial_mult(cls, i: int, j: int) -> "PolynomialFunction":
+        """
+        Create f: Z/4ZxZ/4Z -> R/Z with f(x) = binomial(x, i)*binomial(y, j)/4 mod 1.
+        """
+        G = DirectSumGroup([4,4])
+        if i < 0 or j < 0:
+            raise ValueError("Binomial index i must be non-negative.")
+        elements = G.elements()
+        vals: Dict[Any, Fraction] = {}
+        for (x,y) in elements:
+            vals[(x,y)] = mod1_frac(Fraction(comb(x, i)*comb(y, j),4))
+        return PolynomialFunction(G,vals)
+    
+    @classmethod
+    def load_functions_from_json(cls, json_path: str, G: AbelianGroup) -> List["PolynomialFunction"]:
+        with open(json_path, "r") as f:
+            raw = json.load(f)
+
+        polyfuncs = []
+        for func_dict in raw:
+            values = {
+                eval(k): Fraction(v) for k, v in func_dict.items()
+            }
+            polyfuncs.append(PolynomialFunction(G, values))
+
+        return polyfuncs
+
     def __call__(self, g: Any) -> Fraction:
         return self.values[g]
+
 
     def __add__(self, other: "PolynomialFunction") -> "PolynomialFunction":
         """
@@ -127,9 +173,11 @@ class PolynomialFunction:
 
     def degree_leq(self, d: int) -> bool:
         """
-        If it passes this test, check that for every (d+1)-tuple (h1,…,h_{d+1})∈G^{d+1},
+        Check that for every (d+1)-tuple (h1,…,h_{d+1})∈G^{d+1},
         Δ_{h1,…,h_{d+1}} f is the zero function.  Return True iff so.
         Warning: runtime is |G|^{(d+1)}, so only small d/|G| feasible.
+        """
+
         """
         if d < 0:
             return False
@@ -138,6 +186,27 @@ class PolynomialFunction:
             if not self.iterated_difference(list(hs)).is_zero_function():
                 return False
         return True
+        """
+        if d < 0:
+            return False
+        for hs in itertools.combinations_with_replacement(standart_basis(len(self.G.elements()[0])),d+1):
+            if not self.iterated_difference(list(hs)).is_zero_function():
+                return False
+        return True
+
+    def degree(self, max_degree:int = 1000) -> int:
+        """
+        If degree <= max_degree + 1, return degree, else, return 999
+        """
+        t = 0
+        for i in range(max_degree):
+            if self.degree_leq(i) == False:
+                t += 1
+            else:
+                return t
+        return 10000
+
+
 
     def explain(self) -> None:
         """
@@ -146,3 +215,5 @@ class PolynomialFunction:
         print("PolynomialFunction values (mod 1):")
         for g in self.G:
             print(f"  f({g}) = {self.values[g]}")
+
+

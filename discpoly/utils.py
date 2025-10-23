@@ -1,9 +1,11 @@
 from fractions import Fraction
 from typing import Union
+import numpy as np
 
 Real = Union[float, Fraction]
 
-
+def standart_basis(k):
+    return np.eye(k, dtype=int)
 
 def mod1_frac(x: Fraction) -> Fraction:
     """
@@ -37,3 +39,4 @@ def zero_mod1(typ=float) -> Real:
     if typ is Fraction:
         return Fraction(0, 1)
     return 0.0
+
